@@ -1,0 +1,42 @@
+erDiagram
+    CUSTOMER {
+        int CustomerID PK
+        string FullName
+        string Email
+        string Phone
+        string Password
+    }
+    THERAPIST {
+        int TherapistID PK
+        string FullName
+        string Email
+        string Phone
+        string ApplicationStatus
+    }
+    ADMIN {
+        int AdminID PK
+        string Username
+        string Password
+        string RoleLevel
+    }
+    SERVICE {
+        int ServiceID PK
+        string ServiceName
+        string Description
+        float Price
+        string ImageURL
+    }
+    BOOKING {
+        int BookingID PK
+        int CustomerID FK
+        int TherapistID FK
+        int ServiceID FK
+        date AppointmentDate
+        time AppointmentTime
+        string Status
+    }
+    CUSTOMER ||--o{ BOOKING : places
+    THERAPIST ||--o{ BOOKING : is_assigned_to
+    SERVICE ||--o{ BOOKING : is_included_in
+    ADMIN ||--o{ SERVICE : creates_and_manages
+    ADMIN ||--o{ THERAPIST : monitors_and_approves
