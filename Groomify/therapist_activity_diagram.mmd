@@ -1,0 +1,36 @@
+flowchart TD
+    %% Nodes
+    Start((Start))
+    VisitSite[Visit Groomify Portal]
+    
+    subgraph Auth [Authentication]
+        RegTherapist[Register as Therapist]
+        LoginTherapist[Login as Therapist]
+    end
+    
+    TherapistDash[Therapist Dashboard]
+    
+    subgraph Work Flow
+        ViewAssigned[View Approved Assigned Appointments]
+        MarkDone[Mark Work as Done]
+        UpdateStatusCompleted[System: Update Status to Completed]
+    end
+    
+    LogoutTherapist[Logout]
+    End((End))
+
+    %% Flows
+    Start --> VisitSite
+    VisitSite --> RegTherapist
+    VisitSite --> LoginTherapist
+    RegTherapist --> LoginTherapist
+    LoginTherapist --> TherapistDash
+    
+    TherapistDash --> ViewAssigned
+    ViewAssigned --> MarkDone
+    MarkDone --> UpdateStatusCompleted
+    UpdateStatusCompleted --> TherapistDash
+    ViewAssigned --> TherapistDash
+    
+    TherapistDash --> LogoutTherapist
+    LogoutTherapist --> End

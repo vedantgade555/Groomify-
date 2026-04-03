@@ -1,0 +1,67 @@
+sequenceDiagram
+    actor Customer
+    actor Admin
+    actor Therapist
+    participant System as Web Portal
+    participant DB as Booking Database
+    participant Mail as Email Service
+
+    %% Customer Authentication and Browsing
+    Customer->>System: Login / Authenticate
+    System-->>Customer: Show Dashboard
+    
+    Customer->>System: Browse Therapists & Services
+    System->>DB: Fetch Available Services
+    DB-->>System: Return DB Records
+    System-->>Customer: Display Options
+    
+    %% Booking Creation
+    Customer->>System: Details + Pay Token Amount
+    System->>DB: Create Booking Entry (Status: Pending)
+    DB-->>System: Booking Created Successfully
+    System-->>Customer: Booking Confirmation (Pending Admin Approval)
+
+    %% Admin Review & Approval
+    Admin->>System: Login & View Appointment Requests
+    System->>DB: Fetch Pending Bookings
+    DB-->>System: List of Pending Bookings
+    System-->>Admin: Show Pending Requests
+    
+    alt Admin Approves Request
+        Admin->>System: Click 'Approve'
+        System->>DB: Update Status to 'Approved'
+        System->>Mail: Trigger Approval Email Notification
+        Mail-->>Customer: "Your appointment ID X is approved!"
+    else Admin Rejects Request
+        Admin->>System: Click 'Reject'
+        System->>DB: Update Status to 'Rejected'
+        System->>Mail: Trigger Rejection Email Notification
+        Mail-->>Customer: "Your appointment ID X is rejected."
+    end
+    
+    %% Therapist Work Lifecycle (Assuming Admin Approved)
+    Therapist->>System: Login & View Therapist Dashboard
+    System->>DB: Fetch Assigned (Approved) Bookings for Therapist
+    DB-->>System: Return Bookings
+    System-->>Therapist: Display Work Schedule
+    
+    %% Following physical service completion
+    Therapist->>System: Click 'Mark Work as Done'
+    System->>DB: Update Status to 'Completed'
+    DB-->>System: Update Success
+    System-->>Therapist: Shows "Work marked as done successfully."
+
+    %% Asynchronous Cancellation flow (Can happen anytime before completion)
+    opt Cancellation Action
+        Customer->>System: Click 'Cancel Booking'
+        System->>DB: Retrieve Booking Timestamp
+        System->>System: Calculate Time Remaining
+        alt Time remaining > 30 mins
+            System->>Customer: Process Full 100% Refund
+        else Time remaining < 30 mins
+            System->>Customer: Process Partial 75% Refund (25% Penalty)
+        end
+        System->>DB: Update Booking Status to 'Cancelled'
+        DB-->>System: Row Updated
+        System-->>Customer: Cancellation Complete
+    end

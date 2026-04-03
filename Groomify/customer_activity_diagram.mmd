@@ -1,0 +1,57 @@
+flowchart TD
+    %% Nodes
+    Start((Start))
+    VisitSite[Visit Groomify Portal]
+    
+    subgraph Auth [Authentication]
+        direction LR
+        RegCust[Register as Customer]
+        LoginCust[Login as Customer]
+    end
+    
+    CustDash[Customer Dashboard]
+    
+    subgraph Booking Flow
+        BrowseServices[Browse Available Services]
+        SelectTherapist[Select Therapist & Time Slot]
+        PayToken[Pay Token Amount]
+        CreateBooking[System: Create Booking - Pending]
+    end
+    
+    subgraph Management Flow
+        ViewMyAppointments[View My Appointments]
+        CancelBookingCust[Cancel Appointment]
+        CalcRefund[System: Calculate Refund]
+        ProcessRefund[System: Process Refund]
+        UpdateStatusCancelled[System: Update Status to Cancelled]
+    end
+    
+    LogoutCust[Logout]
+    End((End))
+
+    %% Flows
+    Start --> VisitSite
+    VisitSite --> RegCust
+    VisitSite --> LoginCust
+    RegCust --> LoginCust
+    LoginCust --> CustDash
+    
+    CustDash --> BrowseServices
+    BrowseServices --> SelectTherapist
+    SelectTherapist --> PayToken
+    PayToken --> CreateBooking
+    CreateBooking --> CustDash
+    
+    CustDash --> ViewMyAppointments
+    ViewMyAppointments --> CancelBookingCust
+    CancelBookingCust --> CalcRefund
+    CalcRefund -->|Time Difference >= 30 mins| FullRefund[100% Refund]
+    CalcRefund -->|Time Difference < 30 mins| PartialRefund[75% Refund]
+    FullRefund --> ProcessRefund
+    PartialRefund --> ProcessRefund
+    ProcessRefund --> UpdateStatusCancelled
+    UpdateStatusCancelled --> CustDash
+    ViewMyAppointments --> CustDash
+    
+    CustDash --> LogoutCust
+    LogoutCust --> End

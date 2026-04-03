@@ -1,0 +1,118 @@
+flowchart TD
+    %% Nodes
+    Start((Start))
+
+    subgraph Guest[Guest / Unauthenticated User]
+        VisitSite[Visit Groomify Portal]
+        RegCust[Register as Customer]
+        RegTherapist[Register as Therapist]
+        LoginAdmin[Login as Admin]
+        LoginCust[Login as Customer]
+        LoginTherapist[Login as Therapist]
+    end
+
+    subgraph Admin[Administrator]
+        AdminDash[Admin Dashboard]
+        ManageServices[Manage Services: Add/Edit/Delete]
+        ViewUsers[View Customers & Therapists]
+        ManageBookings[Manage Appointment Requests]
+        ApproveBooking[Approve Appointment]
+        RejectBooking[Reject Appointment]
+        CancelBookingAdmin[Cancel Appointment]
+    end
+
+    subgraph Customer[Customer]
+        CustDash[Customer Dashboard]
+        BrowseServices[Browse Available Services]
+        SelectTherapist[Select Therapist & Time Slot]
+        PayToken[Pay Token Amount]
+        ViewMyAppointments[View My Appointments]
+        CancelBookingCust[Cancel Appointment]
+    end
+
+    subgraph Therapist[Therapist]
+        TherapistDash[Therapist Dashboard]
+        ViewAssigned[View Assigned Appointments]
+        MarkDone[Mark Work as Done]
+    end
+
+    subgraph System[System Automated Tasks]
+        CreateBooking[Create Booking - Status: Pending]
+        SendApproveEmail[Send Approval Email]
+        SendRejectEmail[Send Rejection Email]
+        CalcRefund[Calculate Refund based on Time]
+        ProcessRefund[Process Refund]
+        UpdateStatusCancelled[Update Status: Cancelled]
+        UpdateStatusCompleted[Update Status: Completed]
+    end
+
+    %% Flows
+    Start --> VisitSite
+    VisitSite --> RegCust
+    VisitSite --> RegTherapist
+    VisitSite --> LoginAdmin
+    VisitSite --> LoginCust
+    VisitSite --> LoginTherapist
+
+    RegCust --> LoginCust
+    RegTherapist --> LoginTherapist
+
+    %% Admin Flow
+    LoginAdmin --> AdminDash
+    AdminDash --> ManageServices
+    AdminDash --> ViewUsers
+    AdminDash --> ManageBookings
+    AdminDash --> CancelBookingAdmin
+
+    %% Customer Flow
+    LoginCust --> CustDash
+    CustDash --> BrowseServices
+    BrowseServices --> SelectTherapist
+    SelectTherapist --> PayToken
+    PayToken --> CreateBooking
+    
+    CustDash --> ViewMyAppointments
+    ViewMyAppointments --> CancelBookingCust
+
+    %% Booking Lifecycle
+    CreateBooking --> ManageBookings
+
+    ManageBookings --> ApproveBooking
+    ManageBookings --> RejectBooking
+
+    ApproveBooking --> SendApproveEmail
+    RejectBooking --> SendRejectEmail
+
+    %% Therapist Flow
+    SendApproveEmail --> TherapistDash
+    LoginTherapist --> TherapistDash
+    TherapistDash --> ViewAssigned
+    ViewAssigned --> MarkDone
+    MarkDone --> UpdateStatusCompleted
+
+    %% Cancellation & Refund Logic
+    CancelBookingCust --> CalcRefund
+    CancelBookingAdmin --> CalcRefund
+
+    CalcRefund -->|"> 30 mins before appointment"| FullRefund[100% Refund Processed]
+    CalcRefund -->|"< 30 mins before appointment"| PartialRefund[75% Refund Processed]
+    
+    FullRefund --> ProcessRefund
+    PartialRefund --> ProcessRefund
+    ProcessRefund --> UpdateStatusCancelled
+
+    %% End nodes
+    LogoutCust[Logout]
+    LogoutAdmin[Logout]
+    LogoutTherapist[Logout]
+
+    CustDash --> LogoutCust
+    AdminDash --> LogoutAdmin
+    TherapistDash --> LogoutTherapist
+    
+    UpdateStatusCompleted --> End((End))
+    UpdateStatusCancelled --> End
+    SendRejectEmail --> End
+    LogoutCust --> End
+    LogoutAdmin --> End
+    LogoutTherapist --> End

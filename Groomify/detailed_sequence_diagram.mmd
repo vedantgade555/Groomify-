@@ -1,0 +1,70 @@
+sequenceDiagram
+    autonumber
+    
+    actor Customer
+    participant BookJSP as book_appointment.jsp
+    participant BookServlet as BookingServlet.java
+    
+    actor Admin
+    participant AppReqJSP as appointment_requests.jsp
+    participant AppServlet as ApprovalServlet.java
+    participant Email as EmailUtil.java
+    
+    actor Therapist
+    participant TherDash as therapist_dashboard.jsp
+    participant WorkServlet as WorkDoneServlet.java
+    
+    participant BDAO as BookingDAO.java
+    participant DB as MySQL Database
+
+    %% --- 1. Customer Booking Process ---
+    rect rgb(240, 248, 255)
+        note right of Customer: 1. Customer Books Appointment
+        Customer->>BookJSP: Fills form & submits (Therapist, Service, Date, Time)
+        BookJSP->>BookServlet: POST /BookingServlet (session user, params)
+        BookServlet->>BookServlet: Create Booking Model Object
+        BookServlet->>BDAO: bookAppointment(Booking)
+        BDAO->>DB: INSERT INTO bookings (Status: 'Pending')
+        DB-->>BDAO: Execution Success (1 row affected)
+        BDAO-->>BookServlet: Returns true
+        BookServlet-->>Customer: Redirect to my_appointments.jsp
+    end
+
+    %% --- 2. Admin Approval Process ---
+    rect rgb(255, 240, 245)
+        note right of Admin: 2. Admin Approves the Pending Booking
+        Admin->>AppReqJSP: Views Pending, Clicks 'Approve'
+        AppReqJSP->>AppServlet: POST /ApprovalServlet (bookingId, status="Approved", email)
+        AppServlet->>BDAO: updateStatus(bookingId, "Approved")
+        BDAO->>DB: UPDATE bookings SET status='Approved' WHERE id=?
+        DB-->>BDAO: Execution Success
+        BDAO-->>AppServlet: Returns true
+        
+        %% Send Email
+        AppServlet->>Email: sendEmail(customerEmail, "Appointment Approved", body)
+        Email-->>Email: Async SMTP dispatch
+        Email-->>AppServlet: Success
+        
+        AppServlet-->>Admin: Redirect to appointment_requests.jsp
+    end
+
+    %% --- 3. Therapist Completes Work Process ---
+    rect rgb(240, 255, 240)
+        note right of Therapist: 3. Therapist Marks Work as Done
+        Therapist->>TherDash: Views Approved Booking, Clicks 'Mark as Done'
+        TherDash->>WorkServlet: POST /WorkDoneServlet (bookingId)
+        
+        %% Fetch booking to calculate tokens if necessary
+        WorkServlet->>BDAO: getBookingById(bookingId)
+        BDAO->>DB: SELECT * FROM bookings WHERE id=?
+        DB-->>BDAO: ResultSet
+        BDAO-->>WorkServlet: Returns Booking Object
+        
+        %% Complete booking
+        WorkServlet->>BDAO: completeBooking(bookingId, 0.0)
+        BDAO->>DB: UPDATE bookings SET status='Completed' WHERE id=?
+        DB-->>BDAO: Execution Success
+        BDAO-->>WorkServlet: Returns true
+        
+        WorkServlet-->>Therapist: Redirect to therapist_dashboard.jsp?msg=Success
+    end

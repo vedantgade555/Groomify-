@@ -1,0 +1,56 @@
+flowchart TD
+    %% Nodes
+    Start((Start))
+    VisitSite[Visit Groomify Portal]
+    LoginAdmin[Login as Admin]
+    
+    AdminDash[Admin Dashboard]
+    
+    subgraph Service & User Management
+        ManageServices[Manage Services: Add/Edit/Delete]
+        ViewUsers[View Registered Customers & Therapists]
+    end
+    
+    subgraph Booking Management
+        ManageBookings[Manage Appointment Requests]
+        ApproveBooking[Approve Appointment]
+        RejectBooking[Reject Appointment]
+        SendApproveEmail[System: Send Approval Email]
+        SendRejectEmail[System: Send Rejection Email]
+        CancelBookingAdmin[Cancel Existing Appointment]
+        CalcRefund[System: Calculate Refund]
+        UpdateStatusCancelled[System: Update Status Cancelled]
+    end
+    
+    LogoutAdmin[Logout]
+    End((End))
+
+    %% Flows
+    Start --> VisitSite
+    VisitSite --> LoginAdmin
+    LoginAdmin --> AdminDash
+    
+    AdminDash --> ManageServices
+    ManageServices --> AdminDash
+    
+    AdminDash --> ViewUsers
+    ViewUsers --> AdminDash
+    
+    AdminDash --> ManageBookings
+    ManageBookings --> ApproveBooking
+    ManageBookings --> RejectBooking
+    ManageBookings --> CancelBookingAdmin
+    
+    ApproveBooking --> SendApproveEmail
+    SendApproveEmail --> AdminDash
+    
+    RejectBooking --> SendRejectEmail
+    SendRejectEmail --> AdminDash
+    
+    CancelBookingAdmin --> CalcRefund
+    CalcRefund -->|Time Difference Rules| ProcessRefund[Process Refund]
+    ProcessRefund --> UpdateStatusCancelled
+    UpdateStatusCancelled --> AdminDash
+    
+    AdminDash --> LogoutAdmin
+    LogoutAdmin --> End
